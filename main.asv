@@ -1,0 +1,92 @@
+map=im2bw(imread('random_map.bmp'));
+
+% Configurables:
+noOfPointsInSolution = 10;
+populationSize = 200; 
+generations = 900;
+mutationChance = 0.25;
+punishment = 1000;
+mutationBounds = 50; % Area around current pixel that the next mutation can be
+reintroductionPercent = 40;
+
+bestPath = [];
+bestFitness = inf;
+
+population = round(rand(populationSize, 2 * noOfPointsInSolution) * 500);
+population = sort(population);
+%% Main Loop
+tic
+for gen = 1:generations
+    display("Generation: "+gen);
+
+    % Get Fitness
+    fitness = fitnessTest(population, map, noOfPointsInSolution, punishment);
+
+    % Get Parents
+    parents = rouletteWheelSelection(population, fitness);
+    numToReintroduce = ceil((1/reintroductionPercent) * populationSize); % Calculate 10% of the population
+    parents(1:numToReintroduce, :) = round(rand(numToReintroduce, 2 * noOfPointsInSolution) * 500);
+    % Crossover
+    children = uniformCrossover(parents);
+    
+    % Mutate
+    children = randomMutation(children, mutationChance, mutationBounds);
+
+    % Set next Generation
+    population = children; 
+
+    % Get the current best fitness and best path from the population
+    [currentBestFitness, bestIdx] = min(fitness);
+    currentBestPath = population(bestIdx, :);
+
+    % Update the best fitness and best path if needed
+    if currentBestFitness < bestFitness
+        bestFitness = currentBestFitness;
+        bestPath = currentBestPath;
+        timeSinceLastImprovement = 1;
+    else
+        timeSinceLastImprovement = timeSinceLastImprovement + 1;
+    end
+
+    % Insert bestPath at the first row of the population
+    population(1, :) = bestPath;
+    numToReintroduce = ceil((1/reintroductionPercent) * populationSize); % Calculate 10% of the population
+    population(1:numToReintroduce, :) = round(rand(numToReintroduce, 2 * noOfPointsInSolution) * 500);
+end
+toc
+
+function pathDistance = getEuclideanDistance(x_coords, y_coords)
+    pathDistance = 0;
+    
+    % Combine x and y coordinates into a path matrix
+    path = [x_coords(:), y_coords(:)];  % Ensure they are column vectors
+    
+    % Loop through each consecutive pair of points
+    for i = 1:(size(path, 1) - 1)
+        % Calculate Euclidean distance between consecutive points
+        pathDistance = pathDistance + norm(path(i,:) - path(i+1,:));  % Distance between consecutive points
+    end
+    
+    % Add the distance from the last point to the goal (e.g., [500, 500])
+    pathDistance = pathDistance + norm(path(end,:) - [500, 500]);
+end
+
+
+%% Final Section
+
+display("Fitness: " +bestFitness);
+
+x_coords = bestPath(1:2:end);
+y_coords = bestPath(2:2:end);
+
+start = [0, 0];
+finish = [500, 500];
+
+% Display Final Result:
+path = [start; [x_coords', y_coords']; finish];
+clf;
+imshow(map);
+rectangle('position',[1 1 size(map)-1],'edgecolor','k');
+line(path(:,2),path(:,1));
+
+display("Distance: " + getEuclideanDistance(x_coords, y_coords));

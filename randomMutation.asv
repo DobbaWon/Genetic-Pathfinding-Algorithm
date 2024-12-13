@@ -1,0 +1,32 @@
+
+function children = randomMutation(children, mutationChance)
+    numOffspring = size(children, 1);
+    numGenes = size(children, 2) / 2; % numOfPointsInSolution
+
+    for i = 1:numOffspring
+        if rand < mutationChance
+            % Choose a random gene to mutate
+            geneToMutate = randi([1, numGenes]);
+
+            % Determine the x and y indices for the chosen gene
+            xIdx = 2 * geneToMutate - 1;
+            yIdx = 2 * geneToMutate;
+
+            % Mutate x and y within ±50 pixels, ensuring they remain in bounds [1, 500]
+            children(i, xIdx) = max(1, min(500, children(i, xIdx) + randi([-20, 20])));
+            children(i, yIdx) = max(1, min(500, children(i, yIdx) + randi([-20, 20])));
+
+                        % Choose a random gene to mutate
+            geneToMutate = randi([1, numGenes]);
+
+            % Determine the x and y indices for the chosen gene
+            xIdx = 2 * geneToMutate - 1;
+            yIdx = 2 * geneToMutate;
+
+            % Mutate x and y within ±50 pixels, ensuring they remain in bounds [1, 500]
+            children(i, xIdx) = max(1, min(500, children(i, xIdx) + randi([-50, 50])));
+            children(i, yIdx) = max(1, min(500, children(i, yIdx) + randi([-50, 50])));
+        end
+    end
+end
+
